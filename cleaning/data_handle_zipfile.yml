@@ -1,0 +1,6 @@
+---
+src-bucketname: 'jkielbaey-capstone-eu-west-1'
+key: 'RAW/1988/On_Time_On_Time_Performance_1988_1.zip'
+#key: 'RAW/2007/On_Time_On_Time_Performance_2007_1.zip'
+dst-bucketname: 'jkielbaey-capstone-eu-west-1'
+dst-key-prefix: 'CL_TEST'
