@@ -1,0 +1,15 @@
+[
+    {
+        "Name":"S3DistCp step",
+        "Type":"CUSTOM_JAR",
+        "Jar":"command-runner.jar",
+        "Args":["s3-dist-cp","--s3Endpoint=s3.amazonaws.com","--src=s3://jkielbaey-capstone-eu-west-1/CLEAN_LAMBDA/","--dest=hdfs:///INPUT"],
+        "ActionOnFailure":"CONTINUE"
+    },
+    {
+        "Name": "Load data from HDFS into HIVE",
+        "Type": "HIVE",
+        "Args": ["-f","s3://jkielbaey-capstone-eu-west-1/SCRIPTS/load_data_hive.sql"],
+        "ActionOnFailure":"CONTINUE"
+    }
+]
