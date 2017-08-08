@@ -1,72 +1,75 @@
-CREATE EXTERNAL TABLE capstone_t1_g2_q4
-    (flight          STRING,
-    avg_arrival_delay   DOUBLE)
+CREATE TABLE capstone_t1_g2_q4
+    (flight       STRING,
+    avg_arr_delay DOUBLE)
 STORED BY 'org.apache.hadoop.hive.dynamodb.DynamoDBStorageHandler'
 TBLPROPERTIES(
     "dynamodb.table.name" = "capstone_t1_g2_q4",
     "dynamodb.column.mapping"="flight:flight,avg_arrival_delay:avg_arrival_delay"
 );
 
+SET mapred.reduce.tasks=40;
+SET hive.exec.reducers.max=40;
+SET dynamodb.throughput.write.percent=1.0;
+set hive.cli.print.header=true;
+
+DROP TABLE capstone_t1_g2_q4;
+CREATE TABLE capstone_t1_g2_q4
+    (flight       STRING,
+    avg_arr_delay DOUBLE);
 
 INSERT OVERWRITE TABLE capstone_t1_g2_q4
 SELECT
   concat(origin, "-", dest) AS flight,
-  avg(arrdelayminutes) AS avg_arrival_delay
+  round(avg(ArrDelay), 2) AS avg_arr_delay
 FROM aviation
-WHERE cancelled = 0 AND arrdelayminutes IS NOT NULL
+WHERE cancelled = 0 AND ArrDelay IS NOT NULL
 GROUP BY origin, dest
-ORDER BY avg_arrival_delay;
 
--- hive> INSERT OVERWRITE TABLE capstone_t1_g2_q4
---     > SELECT
---     >   concat(origin, "-", dest) AS flight,
---     >   avg(arrdelayminutes) AS avg_arrival_delay
---     > FROM aviation
---     > WHERE cancelled = 0 AND arrdelayminutes IS NOT NULL
---     > GROUP BY origin, dest
---     > ORDER BY avg_arrival_delay;
--- Query ID = hadoop_20170802200120_58c1b633-12cd-4e75-82c1-a6d49763a9fb
+-- Query ID = hadoop_20170808202711_c74dbc04-f64c-4d44-a440-7f370fb69da7
 -- Total jobs = 1
 -- Launching Job 1 out of 1
 --
 --
--- Status: Running (Executing on YARN cluster with App id application_1501696989350_0009)
+-- Status: Running (Executing on YARN cluster with App id application_1502175039084_0021)
 --
 -- ----------------------------------------------------------------------------------------------
 --         VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
 -- ----------------------------------------------------------------------------------------------
--- Map 1 .......... container     SUCCEEDED     65         65        0        0       0       0
--- Reducer 2 ...... container     SUCCEEDED     40         40        0        0       0       0
--- Reducer 3 ...... container     SUCCEEDED      1          1        0        0       0       0
+-- Map 1 .......... container     SUCCEEDED     33         33        0        0       0       0
+-- Reducer 2 ...... container     SUCCEEDED     20         20        0        0       0       0
 -- ----------------------------------------------------------------------------------------------
--- VERTICES: 03/03  [==========================>>] 100%  ELAPSED TIME: 181.73 s
+-- VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 33.73 s
 -- ----------------------------------------------------------------------------------------------
+-- Loading data to table default.capstone_t1_g2_q4
 -- OK
--- flight	avg_arrival_delay
--- Time taken: 183.558 seconds
---
--- hive> SELECT * FROM capstone_t1_g2_q4 WHERE flight IN ('CMI-ORD', 'IND-CMH', 'DFW-IAH', 'LAX-SFO', 'JFK-LAX', 'ATL-PHX') ORDER BY flight;
--- Query ID = hadoop_20170802200933_f1496561-6693-4515-9742-9b815b684373
+-- flight	avg_arr_delay
+-- Time taken: 34.599 seconds
+
+SELECT * FROM capstone_t1_g2_q4 WHERE flight IN
+  ('CMI-ORD', 'IND-CMH', 'DFW-IAH', 'LAX-SFO', 'JFK-LAX', 'ATL-PHX')
+ORDER BY flight, avg_arr_delay;
+
+-- Query ID = hadoop_20170808202756_541492f0-affe-447d-bba2-3c518ba6965c
 -- Total jobs = 1
 -- Launching Job 1 out of 1
 --
 --
--- Status: Running (Executing on YARN cluster with App id application_1501696989350_0010)
+-- Status: Running (Executing on YARN cluster with App id application_1502175039084_0021)
 --
 -- ----------------------------------------------------------------------------------------------
 --         VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
 -- ----------------------------------------------------------------------------------------------
--- Map 1 .......... container     SUCCEEDED      1          1        0        0       0       0
+-- Map 1 .......... container     SUCCEEDED      2          2        0        0       0       0
 -- Reducer 2 ...... container     SUCCEEDED      1          1        0        0       0       0
 -- ----------------------------------------------------------------------------------------------
--- VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 6.53 s
+-- VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 4.41 s
 -- ----------------------------------------------------------------------------------------------
 -- OK
--- capstone_t1_g2_q4.flight	capstone_t1_g2_q4.avg_arrival_delay
--- ATL-PHX	13.620285929786068
--- CMI-ORD	15.739150630391507
--- DFW-IAH	11.060462025053555
--- IND-CMH	6.613487475915222
--- JFK-LAX	14.632357646666017
--- LAX-SFO	13.695194295129438
--- Time taken: 8.486 seconds, Fetched: 6 row(s)
+-- capstone_t1_g2_q4.flight	capstone_t1_g2_q4.avg_arr_delay
+-- ATL-PHX	9.02
+-- CMI-ORD	10.14
+-- DFW-IAH	7.65
+-- IND-CMH	2.9
+-- JFK-LAX	6.64
+-- LAX-SFO	9.59
+-- Time taken: 5.011 seconds, Fetched: 6 row(s)
