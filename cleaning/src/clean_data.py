@@ -1,15 +1,18 @@
 #!/usr/bin/python
-
-import re, json, csv, io, os
+import re
+import json
+import csv
+import io
+import os
 from zipfile import ZipFile
 import boto3
 import cStringIO
 import logging
 
 SELECTED_FIELDS = [
-    'Year', 'Month', 'DayofMonth', 'DayOfWeek', 'Quarter', 'UniqueCarrier',
-    'FlightNum', 'Origin', 'Dest', 'CRSDepTime', 'DepTime', 'DepDelayMinutes',
-    'CRSArrTime', 'ArrTime', 'ArrDelayMinutes', 'Cancelled'
+    'Year', 'Month', 'DayofMonth', 'DayOfWeek', 'FlightDate', 'UniqueCarrier', 'FlightNum', 'Origin', 'Dest',
+    'CRSDepTime', 'DepTime', 'DepDelay', 'DepDelayMinutes', 'CRSArrTime', 'ArrTime', 'ArrDelay', 'ArrDelayMinutes',
+    'Cancelled'
 ]
 
 s3client = boto3.client('s3')
@@ -20,6 +23,7 @@ if 'DEBUG' in os.environ and os.environ['DEBUG'] == 'true':
     logger.debug('debug mode enabled.')
 else:
     logger.setLevel(logging.INFO)
+
 
 def write_new_csvfiles(dest_bucket, dest_prefix, data):
     """
@@ -42,7 +46,7 @@ def write_new_csvfiles(dest_bucket, dest_prefix, data):
                     day
                 )
                 output = cStringIO.StringIO()
-                writer = csv.DictWriter(output, fieldnames = day_data[0].keys())
+                writer = csv.DictWriter(output, fieldnames=day_data[0].keys())
                 writer.writeheader()
                 writer.writerows(day_data)
                 results['written_lines'] += len(day_data)
@@ -61,6 +65,7 @@ def write_new_csvfiles(dest_bucket, dest_prefix, data):
                 })
                 logging.info('Data file %s written to S3 (lines: %d).' % (output_file, len(day_data)))
     return results
+
 
 def process_csvfile(csvfile, csvlines):
     """
@@ -85,17 +90,16 @@ def process_csvfile(csvfile, csvlines):
     csvreader = csv.DictReader(csvlines)
 
     nr_lines = 0
+    skipped_lines = 0
     logging.debug('Fieldnames: %s' % json.dumps(sorted(csvreader.fieldnames)))
     for line in csvreader:
         try:
-            output_line = { i:line[i] for i in SELECTED_FIELDS }
+            output_line = {i: line[i] for i in SELECTED_FIELDS}
             year = int(line['Year'])
             month = int(line['Month'])
             day = int(line['DayofMonth'])
 
             # # Add value to indicate if flight departed/arrived on time.
-            output_line['DepOnTime'] = 1 if line['DepDelayMinutes'] == '0.00' else 0
-            output_line['ArrOnTime'] = 1 if line['ArrDelayMinutes'] == '0.00' else 0
             if year not in output_data:
                 output_data[year] = {}
             if month not in output_data[year]:
@@ -110,8 +114,10 @@ def process_csvfile(csvfile, csvlines):
     return {
         'csvfile': csvfile,
         'processed_nr_lines': nr_lines,
+        'skipped_nr_lines': skipped_lines,
         'data': output_data
     }
+
 
 def download_and_extract_zipfile(source_bucket, source_key):
     """
@@ -142,7 +148,7 @@ def download_and_extract_zipfile(source_bucket, source_key):
                 'filename': file,
                 'content': lines,
                 'nr_lines': len(lines)-1
-            } # The header line is subtracted.
+            }
             logging.info('CSV file %s read into memory.' % file)
             csvfiles.append(item)
     tf.close()
@@ -150,6 +156,7 @@ def download_and_extract_zipfile(source_bucket, source_key):
     tf = None
     image = None
     return csvfiles
+
 
 def handle_zipfile(event, context):
     """
@@ -176,15 +183,15 @@ def handle_zipfile(event, context):
 
         logging.info('Validating written data from %s.' % csvfile['filename'])
         validation_ok = 1
-        if csvfile['nr_lines'] != processed_data['processed_nr_lines']:
+        if csvfile['nr_lines'] != (processed_data['processed_nr_lines'] + processed_data['skipped_nr_lines']):
             logging.error('Not all lines from %s were processed. (read: %d vs processed: %d).' %
-                (csvfile['filename'], csvfile['nr_lines'], processed_data['processed_nr_lines']) )
+                          (csvfile['filename'], csvfile['nr_lines'], processed_data['processed_nr_lines']))
             validation_ok = 0
         else:
             logging.info('All lines read from %s were processed.' % csvfile['filename'])
-        if csvfile['nr_lines'] != results['written_lines']:
+        if csvfile['nr_lines'] != (results['written_lines'] + processed_data['skipped_nr_lines']):
             logging.error('Not all lines from %s were written to S3. (read: %d vs written: %d).' %
-                (csvfile['filename'], csvfile['nr_lines'], results['written_lines']) )
+                          (csvfile['filename'], csvfile['nr_lines'], results['written_lines']))
             validation_ok = 0
         else:
             logging.info('All lines read from %s were written to S3 after processing.' % csvfile['filename'])

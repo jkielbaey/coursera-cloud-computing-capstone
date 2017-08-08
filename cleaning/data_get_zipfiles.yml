@@ -1,6 +1,5 @@
 ---
 src-bucketname: 'jkielbaey-capstone-eu-west-1'
-#src-prefix: 'RAW/1988/On_Time_On_Time_Performance_1988_1'
 src-prefix: 'RAW'
 dst-bucketname: 'jkielbaey-capstone-eu-west-1'
-dst-prefix: 'CLEAN_LAMBDA'
+dst-prefix: 'CLEAN_V3'
