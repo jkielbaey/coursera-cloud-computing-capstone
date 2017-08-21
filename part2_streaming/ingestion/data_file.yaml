@@ -1,0 +1,4 @@
+---
+bucket_name: 'jkielbaey-capstone-eu-west-1'
+key_name: 'CLEAN_V3/2008/10/2008_10_08.csv'
+kafka_topic: "test-month-t1,test-month-t2,test-month-t3,test-month-t4"

@@ -1,0 +1,37 @@
+service: capstone-kafka-ingest
+
+provider:
+  name: aws
+  runtime: python2.7
+  stage: dev
+  region: eu-west-1
+  memorySize: 1536
+  timeout: 300
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "ec2:CreateNetworkInterface"
+        - "ec2:DescribeNetworkInterfaces"
+        - "ec2:DeleteNetworkInterface"
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - lambda:*
+      Resource: "*"
+  environment:
+    KAFKA_HOSTS: "ip-10-1-0-22:9092,ip-10-1-1-170:9092,ip-10-1-2-220:9092"
+
+functions:
+  send_file:
+    handler: load_data.handler_file
+    vpc:
+      securityGroupIds:
+        - sg-f3bbd28b
+      subnetIds:
+        - subnet-673dc211
+        - subnet-3d27f059
+        - subnet-23e0f47a

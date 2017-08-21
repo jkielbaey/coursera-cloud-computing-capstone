@@ -1,0 +1,4 @@
+---
+bucket_name: "jkielbaey-capstone-eu-west-1"
+key_prefix: "CLEAN_V3/2008/"
+kafka_topic: "capstone_2008"
