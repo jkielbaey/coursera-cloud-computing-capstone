@@ -17,6 +17,6 @@ aws emr create-cluster \
     --log-uri 's3n://jkielbaey-capstone-eu-west-1/EMR/' \
     --instance-groups \
         'InstanceGroupType=MASTER,Name=Master,InstanceCount=1,InstanceType=m4.xlarge,EbsConfiguration={EbsOptimized=true,EbsBlockDeviceConfigs=[{VolumeSpecification={VolumeType=gp2,SizeInGB=32},VolumesPerInstance=1}]}' \
-        'InstanceGroupType=CORE,Name=Core,InstanceCount=3,InstanceType=r4.xlarge,EbsConfiguration=
-  {EbsOptimized=true,EbsBlockDeviceConfigs=[{VolumeSpecification={VolumeType=gp2,SizeInGB=100},VolumesPerInstance=1}]}' \
+        'InstanceGroupType=CORE,Name=Core,InstanceCount=5,BidPrice=0.15,InstanceType=r4.2xlarge,EbsConfiguration=
+  {EbsOptimized=true,EbsBlockDeviceConfigs=[{VolumeSpecification={VolumeType=gp2,SizeInGB=32},VolumesPerInstance=1}]}' \
     --scale-down-behavior TERMINATE_AT_INSTANCE_HOUR
